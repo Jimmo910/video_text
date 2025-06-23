@@ -18,6 +18,8 @@ pip install --upgrade pip
 ### Windows
 venv\Scripts\activate
 python.exe -m pip install --upgrade pip
+#### для использования GPU на Windows
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 pip install fastapi uvicorn whisper torch numpy python-multipart
 ```
