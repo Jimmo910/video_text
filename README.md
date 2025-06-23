@@ -9,9 +9,16 @@
 Создайте и активируйте виртуальное окружение, затем установите пакеты:
 
 ```bash
-python -m venv venv  
+python -m venv venv
+
+### MacOS:
 source venv/bin/activate
 pip install --upgrade pip
+
+### Windows
+venv\Scripts\activate
+python.exe -m pip install --upgrade pip
+
 pip install fastapi uvicorn whisper torch numpy python-multipart
 ```
 
@@ -22,6 +29,29 @@ pip install fastapi uvicorn whisper torch numpy python-multipart
 ```bash
 python server.py
 ```
+
+### Возможная ошибка на Windows (библиотека whisper)
+
+При запуске `server.py` на Windows может возникнуть ошибка:
+
+```
+TypeError: argument of type 'NoneType' is not iterable
+```
+
+Это связано с тем, что оригинальная библиотека `whisper` пытается загрузить `libc`, которая присутствует в Linux/macOS, но отсутствует на Windows.
+
+#### Решение:
+
+Удалите стандартную версию whisper и установите исправленную напрямую с GitHub:
+
+```bash
+pip uninstall -y whisper
+pip install git+https://github.com/m-bain/whisper.git
+```
+```bash
+python server.py
+```
+После этого сервер будет работать корректно и на Windows.
 
 ## Frontend (React)
 
