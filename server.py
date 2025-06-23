@@ -75,6 +75,60 @@ app.add_middleware(
 UPLOAD_DIR = "uploaded_videos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
+@app.post("/estimate")
+async def estimate_endpoint(
+    file_size: int = Form(...),
+    extension: str = Form(...),
+    model: str = Form("base"),
+):
+    """Возвращает примерное время обработки файла."""
+    estimated = estimate_time(extension, file_size, model)
+    return JSONResponse(content={"estimated_time": estimated})
+
+# Файл для хранения статистики
+STATS_FILE = "stats.json"
+
+
+def load_stats():
+    """Загружаем накопленные данные о предыдущих запусках."""
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            return []
+    return []
+
+
+def save_stats(stats):
+    """Сохраняем статистику в файл."""
+    with open(STATS_FILE, "w", encoding="utf-8") as fh:
+        json.dump(stats, fh)
+
+
+def record_stat(ext: str, size: int, model: str, seconds: float) -> None:
+    """Добавляем запись о времени обработки файла."""
+    stats = load_stats()
+    stats.append({"ext": ext, "size": size, "model": model, "time": seconds})
+    save_stats(stats)
+
+
+def estimate_time(ext: str, size: int, model: str) -> float | None:
+    """Возвращает примерное время обработки на основе накопленной статистики."""
+    stats = load_stats()
+    rates = [
+        s["time"] / s["size"]
+        for s in stats
+        if s["ext"] == ext and s["model"] == model and s["size"] > 0
+    ]
+    if not rates:
+        return None
+    avg_rate = sum(rates) / len(rates)
+    return avg_rate * size
+
+
+
 @app.post("/upload")
 async def upload_video(
     file: UploadFile = File(...),
@@ -90,6 +144,10 @@ async def upload_video(
     with open(video_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    file_size = os.path.getsize(video_path)
+    start_time = time.time()
+
     torch.set_default_dtype(torch.float32)
     # Сохранение имени модели
     model_name = model
@@ -102,10 +160,12 @@ async def upload_video(
 
     # Загрузка модели Whisper на выбранное устройство
     model = whisper.load_model(model_name, device=device)
-    
+
     # Распознавание речи из видео
     result = model.transcribe(video_path, language="ru")
     text = result["text"]
+    elapsed = time.time() - start_time
+    record_stat(file_ext, file_size, model_name, elapsed)
     
     # Сохраняем результат в текстовый файл с именем модели
     txt_path = os.path.join(save_dir, f"{model_name}.txt")

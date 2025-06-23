@@ -10,6 +10,7 @@ export default function App() {
   const [splitText, setSplitText] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [elapsed, setElapsed] = useState(0); // прошедшее время в секундах
+  const [predicted, setPredicted] = useState(null); // предполагаемое время
   const timerRef = useRef(null); // ссылка на интервал
 
   const handleFileChange = (e) => {
@@ -24,6 +25,23 @@ export default function App() {
     setError(null);
     setText("");
     setElapsed(0); // обнуляем таймер
+    setPredicted(null);
+
+    // запрашиваем примерное время
+    const ext = file.name.split('.').pop().toLowerCase();
+    try {
+      const estimateData = new FormData();
+      estimateData.append('file_size', file.size);
+      estimateData.append('extension', ext);
+      estimateData.append('model', model);
+      const estRes = await axios.post(
+        import.meta.env.VITE_API_URL + '/estimate',
+        estimateData,
+      );
+      setPredicted(estRes.data.estimated_time);
+    } catch (err) {
+      console.error('Ошибка оценки времени:', err);
+    }
     // запускаем счетчик секунд
     timerRef.current = setInterval(() => {
       setElapsed((prev) => prev + 1);
@@ -129,7 +147,11 @@ export default function App() {
       </form>
 
       {loading && (
-        <p className="mt-4">Время обработки: {elapsed} c</p>
+        predicted !== null ? (
+          <p className="mt-4">Примерно осталось: {Math.round(predicted - elapsed)} c</p>
+        ) : (
+          <p className="mt-4">Время обработки: {elapsed} c</p>
+        )
       )}
 
       {error && <p className="text-red-500 mt-4">{error}</p>}
