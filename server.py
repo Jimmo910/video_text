@@ -15,29 +15,50 @@ import urllib.request
 
 
 def update_whisper_model():
-    """Check PyPI for a new version of whisper and update if necessary."""
-    try:
-        from importlib.metadata import version, PackageNotFoundError
-    except ImportError:  # pragma: no cover - for Python <3.8
-        from importlib_metadata import version, PackageNotFoundError
+    """Update Whisper from GitHub if a new commit on `main` is available."""
+    cache_dir = os.path.join(
+        os.path.expanduser(os.getenv("XDG_CACHE_HOME", "~/.cache")), "whisper"
+    )
+    commit_file = os.path.join(cache_dir, "current_commit.txt")
 
-    try:
-        current_version = version("whisper")
-    except PackageNotFoundError:
-        return
+    # Determine the currently installed commit if recorded
+    current_commit = None
+    if os.path.exists(commit_file):
+        try:
+            with open(commit_file, "r", encoding="utf-8") as fh:
+                current_commit = fh.read().strip()
+        except Exception:
+            current_commit = None
 
-    latest_version = None
+    latest_commit = None
     try:
-        with urllib.request.urlopen("https://pypi.org/pypi/whisper/json", timeout=3) as resp:
+        with urllib.request.urlopen(
+            "https://api.github.com/repos/openai/whisper/commits/main", timeout=3
+        ) as resp:
             data = json.load(resp)
-            latest_version = data.get("info", {}).get("version")
+            latest_commit = data.get("sha")
     except Exception:
         return
 
-    if latest_version and latest_version != current_version:
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper"], check=False)
-        cache_dir = os.path.join(os.path.expanduser(os.getenv("XDG_CACHE_HOME", "~/.cache")), "whisper")
+    if latest_commit and latest_commit != current_commit:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "git+https://github.com/openai/whisper.git",
+            ],
+            check=False,
+        )
         shutil.rmtree(cache_dir, ignore_errors=True)
+        os.makedirs(cache_dir, exist_ok=True)
+        try:
+            with open(commit_file, "w", encoding="utf-8") as fh:
+                fh.write(latest_commit)
+        except Exception:
+            pass
 
 
 app = FastAPI()
