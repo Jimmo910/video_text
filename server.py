@@ -6,6 +6,7 @@ import shutil
 import os
 import torch
 import whisper
+import platform
 import time
 
 app = FastAPI()
@@ -40,8 +41,15 @@ async def upload_video(
     torch.set_default_dtype(torch.float32)
     # Сохранение имени модели
     model_name = model
-    # Загрузка модели Whisper
-    model = whisper.load_model(model_name)
+
+    # Определяем устройство для вычислений
+    if platform.system() == "Windows" and torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    # Загрузка модели Whisper на выбранное устройство
+    model = whisper.load_model(model_name, device=device)
     
     # Распознавание речи из видео
     result = model.transcribe(video_path, language="ru")
