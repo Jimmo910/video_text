@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 
 export default function App() {
@@ -9,6 +9,8 @@ export default function App() {
   const [model, setModel] = useState("base");
   const [splitText, setSplitText] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [elapsed, setElapsed] = useState(0); // прошедшее время в секундах
+  const timerRef = useRef(null); // ссылка на интервал
 
   const handleFileChange = (e) => {
     if (!loading) setFile(e.target.files[0]); // Блокируем выбор файла во время обработки
@@ -21,6 +23,11 @@ export default function App() {
     setLoading(true);
     setError(null);
     setText("");
+    setElapsed(0); // обнуляем таймер
+    // запускаем счетчик секунд
+    timerRef.current = setInterval(() => {
+      setElapsed((prev) => prev + 1);
+    }, 1000);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -38,6 +45,7 @@ export default function App() {
       setError("Ошибка загрузки файла");
     }
     setLoading(false);
+    clearInterval(timerRef.current); // останавливаем таймер
 
     if (soundEnabled) {
       const audio = new Audio("/done.mp3");
@@ -119,6 +127,10 @@ export default function App() {
           {loading ? "Обработка..." : "Загрузить"}
         </button>
       </form>
+
+      {loading && (
+        <p className="mt-4">Время обработки: {elapsed} c</p>
+      )}
 
       {error && <p className="text-red-500 mt-4">{error}</p>}
 
