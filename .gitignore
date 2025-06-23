@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+# Virtual environment
+venv/
+.env
+.env.local
+# VSCode settings
+.vscode/
+# OS files
+.DS_Store
+Thumbs.db
+# Uploaded files
+uploaded_videos/
+# Logs
+*.log
+# Node modules (если фронтенд использует npm/yarn)
+node_modules/
+dist/
+build/
+# React dev files
+*.env.*
