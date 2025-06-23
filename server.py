@@ -110,17 +110,19 @@ def save_stats(stats):
 def record_stat(ext: str, size: int, model: str, seconds: float) -> None:
     """Добавляем запись о времени обработки файла."""
     stats = load_stats()
-    stats.append({"ext": ext, "size": size, "model": model, "time": seconds})
+    # Храним расширения без точки для единообразия
+    stats.append({"ext": ext.lstrip("."), "size": size, "model": model, "time": seconds})
     save_stats(stats)
 
 
 def estimate_time(ext: str, size: int, model: str) -> float | None:
     """Возвращает примерное время обработки на основе накопленной статистики."""
     stats = load_stats()
+    clean_ext = ext.lstrip(".")
     rates = [
         s["time"] / s["size"]
         for s in stats
-        if s["ext"] == ext and s["model"] == model and s["size"] > 0
+        if s["ext"].lstrip(".") == clean_ext and s["model"] == model and s["size"] > 0
     ]
     if not rates:
         return None
@@ -144,7 +146,8 @@ async def upload_video(
     with open(video_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    file_ext = os.path.splitext(file.filename)[1].lower()
+    # Сохраняем расширение без точки для сопоставления со статистикой
+    file_ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
     file_size = os.path.getsize(video_path)
     start_time = time.time()
 
