@@ -1,22 +1,23 @@
-# Video Text Project
+# Проект «Video Text»
 
-This project contains a FastAPI backend and a React/Vite frontend for uploading a video and getting the transcribed text.
+Этот проект содержит backend на FastAPI и frontend на React/Vite для загрузки видео и получения расшифрованного текста.
 
 ## Backend (FastAPI)
 
-### Install dependencies
+### Установка зависимостей
 
-Create and activate a virtual environment and install packages:
+Создайте и активируйте виртуальное окружение, затем установите пакеты:
 
 ```bash
-python -m venv venv
+python -m venv venv  
 source venv/bin/activate
-pip install fastapi uvicorn whisper torch
+pip install --upgrade pip
+pip install fastapi uvicorn whisper torch numpy python-multipart
 ```
 
-### Run the server
+### Запуск сервера
 
-Run `server.py` directly to start the API on port `8000`:
+Запустите `server.py` напрямую, чтобы запустить API на порту `8000`:
 
 ```bash
 python server.py
@@ -24,30 +25,41 @@ python server.py
 
 ## Frontend (React)
 
-### Install dependencies
+### Установка зависимостей
 
-All client files reside in the `client` directory. Install dependencies with npm:
+Все файлы клиента находятся в директории `client`. Установите зависимости через npm:
 
 ```bash
-cd client
+cd client  
 npm install
 ```
 
-### Environment variables
+При установке npm может показать предупреждение о найденных уязвимостях. Чтобы их автоматически исправить, выполните:
 
-The React app expects a `VITE_API_URL` variable pointing to the running FastAPI server. Create a `.env` file inside `client`:
+```bash
+npm audit fix
+```
+
+После этого можно повторно выполнить:
+
+```bash
+npm install
+```
+
+### Переменные окружения
+
+Приложение React ожидает переменную `VITE_API_URL`, указывающую на работающий сервер FastAPI. Создайте файл `.env` внутри `client`:
 
 ```
 VITE_API_URL=http://localhost:8000
 ```
 
-### Run the development server
+### Запуск сервера разработки
 
-Start the Vite development server:
+Запустите сервер разработки Vite:
 
 ```bash
 npm run dev
 ```
 
-The React app will be available at [http://localhost:5173](http://localhost:5173) by default and will send API requests to the URL configured in `VITE_API_URL`.
-
+По умолчанию React-приложение будет доступно по адресу [http://localhost:5173](http://localhost:5173) и будет отправлять API-запросы на адрес, указанный в `VITE_API_URL`.
