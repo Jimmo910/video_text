@@ -24,6 +24,9 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 pip install fastapi uvicorn whisper torch numpy python-multipart
 ```
 
+После установки необходимых библиотек сервер автоматически будет использовать
+GPU при запуске на Windows, если видеокарта поддерживает CUDA.
+
 ### Запуск сервера
 
 Запустите `server.py` напрямую, чтобы запустить API на порту `8000`:
