@@ -8,6 +8,37 @@ import torch
 import whisper
 import platform
 import time
+import subprocess
+import sys
+import json
+import urllib.request
+
+
+def update_whisper_model():
+    """Check PyPI for a new version of whisper and update if necessary."""
+    try:
+        from importlib.metadata import version, PackageNotFoundError
+    except ImportError:  # pragma: no cover - for Python <3.8
+        from importlib_metadata import version, PackageNotFoundError
+
+    try:
+        current_version = version("whisper")
+    except PackageNotFoundError:
+        return
+
+    latest_version = None
+    try:
+        with urllib.request.urlopen("https://pypi.org/pypi/whisper/json", timeout=3) as resp:
+            data = json.load(resp)
+            latest_version = data.get("info", {}).get("version")
+    except Exception:
+        return
+
+    if latest_version and latest_version != current_version:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "whisper"], check=False)
+        cache_dir = os.path.join(os.path.expanduser(os.getenv("XDG_CACHE_HOME", "~/.cache")), "whisper")
+        shutil.rmtree(cache_dir, ignore_errors=True)
+
 
 app = FastAPI()
 
@@ -63,4 +94,5 @@ async def upload_video(
     return JSONResponse(content={"text": text})
 
 if __name__ == "__main__":
+    update_whisper_model()
     uvicorn.run(app, host="0.0.0.0", port=8000)
